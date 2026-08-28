@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vite/client"],
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./client/*"],
+      "@shared/*": ["./shared/*"],
+      "@db": ["./db/index.ts"],
+      "@db/*": ["./db/*"]
+    }
+  },
+  "include": ["client/**/*", "server/**/*", "shared/**/*", "db/**/*"]
+}

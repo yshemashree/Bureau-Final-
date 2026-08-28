@@ -1,0 +1,1 @@
+import { PGlite } from '@electric-sql/pglite'; async function run() { const db = new PGlite('./.pgdata'); console.log('PLAYERS:', await db.query('SELECT * FROM players')); console.log('RUNS:', await db.query('SELECT * FROM runs')); console.log('TODAY:', await db.query(SELECT (now() AT TIME ZONE ''Asia/Kolkata'')::date as today)); } run();
