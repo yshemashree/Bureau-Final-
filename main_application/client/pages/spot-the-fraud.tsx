@@ -328,8 +328,12 @@ export default function SpotTheFraud() {
   const toggleOption = (originalIndex: number) => {
     setSelectedIndices(prev => {
       if (prev.includes(originalIndex)) return prev.filter(i => i !== originalIndex);
-      if (prev.length < currentQuestion!.selectN) return [...prev, originalIndex];
-      return prev;
+      const selectN = currentQuestion!.selectN;
+      if (prev.length < selectN) return [...prev, originalIndex];
+      // Already at the pick limit - swap in the new pick for the oldest one
+      // instead of requiring a manual deselect first (radio-style on
+      // single-answer levels, oldest-out on two-answer levels).
+      return [...prev.slice(1), originalIndex];
     });
   };
 
@@ -860,7 +864,7 @@ export default function SpotTheFraud() {
                         />
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[rgba(0,2,36,0.82)] px-2 py-1.5">
                           <span className="font-mono text-eyebrow-micro font-medium tabular-nums text-white">
-                            {quizImage!.label}
+                            Image {i + 1}
                           </span>
                           <ScanEye className={cn("size-4", isSelected ? "text-violet-500" : "text-white/70")} strokeWidth={1.5} />
                         </div>
@@ -872,7 +876,7 @@ export default function SpotTheFraud() {
                           "shrink-0 font-mono text-eyebrow-micro font-medium tabular-nums",
                           isSelected ? "text-violet-500" : "text-[var(--text-on-dark-muted)]"
                         )}>
-                          {String(opt.originalIndex).padStart(2, '0')}
+                          {String(i + 1).padStart(2, '0')}
                         </span>
                         <span className="min-w-0 flex-1 font-sans text-body-md leading-snug text-white">
                           {opt.text}
