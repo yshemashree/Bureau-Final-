@@ -46,6 +46,40 @@ flowchart TD
 | `db/` | Drizzle ORM + PGlite/Postgres | Schema, migrations, local-first storage |
 | `shared/` | Zod + generated client | Typed request/response contracts shared by client and server |
 
+## Requirements Checklist
+
+### Core spec — Brand Gaming Experience, Hybrid Offline/Online Setup
+
+- [x] 3 interactive sub-games behind one centralized local application
+- [x] Node.js + Express backend, with a dynamic Admin Panel
+- [x] LED display built for the 504×840 portrait resolution
+- [x] Registration shown on the tablet only — never on the LED
+- [x] Local database (PGlite by default, or Postgres) — offline games have no internet dependency
+- [x] Dynamic question management (add / edit / delete / reorder / enable-disable) — questions are database-driven, never hardcoded as the primary source
+- [x] Game 2 (Spoof the System) is a pure redirect to an admin-configured live URL, no API integration
+- [x] Game 3 (Fraud Detective) is database-driven with a local offline fallback
+- [x] Points and score management — per-game, cumulative, tied to session
+- [x] CSV and Excel export, both available on the Admin dashboard
+- [x] No external CDN dependency (fonts are bundled locally via `@fontsource`)
+- [x] System health/status endpoint (`/healthz`)
+- [ ] AI Demo Area (4-screen offline setup) — out of scope for this pass
+
+### Updates tab — Game 1 (Spot the Fraud) & Game 3 (Fraud Detective) fixes
+
+- [x] LED and tablet show the same start screen (the game list)
+- [x] LED never shows the registration screen
+- [x] Responsive UI on tablet and desktop, not just phone width
+- [x] International phone numbers, with a country-code dropdown
+- [x] MCQ: switching to a different option no longer requires deselecting the first one
+- [x] MCQ options always numbered 1-2-3-4 by on-screen order, even after shuffle
+- [x] Retry after a failed run goes to the correct screen, not "High Score Achieved"
+- [x] LED leaderboard rotation removed — LED just shows the game list
+- [x] Fraud Detective clues open by default
+- [x] Fraud Detective graph canvas no longer cut off, uses full width
+- [x] Fraud Detective node labels no longer overwrite the node
+- [ ] Game 2 (Spoof the System) QR code + Google Sheet sync — out of scope for this pass
+- [ ] Demo (4-screen AI Demo Area) — out of scope for this pass
+
 ## Fully Offline Deployment
 
 This application is configured for a **fully offline** air-gapped LAN environment. It does not require internet access, with the *sole exception* of Game 2 ("Beat the Deepfake System"), which is a redirect to a live client URL.
