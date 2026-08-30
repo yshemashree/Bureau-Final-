@@ -52,7 +52,7 @@ export function RetryOptions({ currentGame, onRetry }: RetryOptionsProps) {
         variant="light"
         size="lg"
         chevron
-        onClick={onRetry}
+        onClick={() => onRetry()}
         className="min-h-[64px] w-full"
       >
         Retry

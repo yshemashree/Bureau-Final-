@@ -123,7 +123,7 @@ export default function FraudDetective() {
   const [caseFailSec, setCaseFailSec] = useState(10);
   const [caseClosedSec, setCaseClosedSec] = useState(5);
   const [caseFailTab, setCaseFailTab] = useState<'graph' | 'why'>('graph');
-  const [showClues, setShowClues] = useState(false);
+  const [showClues, setShowClues] = useState(true);
   const [showEndGameDialog, setShowEndGameDialog] = useState(false);
 
   // A hardware/browser back press mid-run must not silently discard the run
@@ -249,7 +249,7 @@ export default function FraudDetective() {
   }, [caseTimeLeft, gameState, solved, revealed, currentCase, wrongGuesses, recoverySkipsRemaining]);
 
   useEffect(() => {
-    setShowClues(false);
+    setShowClues(true);
   }, [gameState, caseIndex]);
 
   /**
@@ -790,7 +790,7 @@ export default function FraudDetective() {
                             <foreignObject x={-60} y={-60} width={120} height={120} className="overflow-visible">
                               <div className="flex h-full w-full flex-col items-center justify-center">
                                 {isSelected || isAnswerNode ? (
-                                  <ScanFrame id={n.id.substring(0, 4)} tone={isAnswerNode ? 'coral' : 'violet'}>
+                                  <ScanFrame tone={isAnswerNode ? 'coral' : 'violet'}>
                                     <div className={cn(
                                       "flex size-12 items-center justify-center border",
                                       isAnswerNode ? "border-coral-600 bg-coral-600 text-russian" : "border-violet-500 bg-violet-700 text-white"
@@ -1097,7 +1097,7 @@ export default function FraudDetective() {
                                 <foreignObject x={-60} y={-60} width={120} height={120} className="overflow-visible">
                                   <div className="flex h-full w-full flex-col items-center justify-center">
                                     {isAnswerNode ? (
-                                      <ScanFrame id={n.id.substring(0, 4)} tone="coral">
+                                      <ScanFrame tone="coral">
                                         <div className="flex size-12 items-center justify-center border border-coral-600 bg-coral-600 text-russian">
                                           <span className="font-mono text-body-md uppercase">{n.id.substring(0, 2)}</span>
                                         </div>

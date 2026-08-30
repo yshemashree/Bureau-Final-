@@ -20,6 +20,23 @@ import { EyebrowTag } from '@/components/bureau/eyebrow-tag';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 import { useSyncState } from '@/hooks/useSyncState';
+import {
+  getCountries,
+  getCountryCallingCode,
+  isValidPhoneNumber,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from 'libphonenumber-js';
+
+/**
+ * Booth visitors are not all Indian, so the phone field needs a real country
+ * picker rather than an assumed +91. India sorts first since it's still the
+ * primary market; everything else is alphabetical by display name.
+ */
+const REGION_NAMES = new Intl.DisplayNames(['en'], { type: 'region' });
+const COUNTRY_OPTIONS: { code: CountryCode; name: string; dialCode: string }[] = getCountries()
+  .map((code) => ({ code, name: REGION_NAMES.of(code) ?? code, dialCode: getCountryCallingCode(code) }))
+  .sort((a, b) => (a.code === 'IN' ? -1 : b.code === 'IN' ? 1 : a.name.localeCompare(b.name)));
 
 const JOB_FUNCTIONS = [
   'Fraud and Risk',
@@ -36,14 +53,8 @@ const JOB_FUNCTIONS = [
 const formSchema = z.object({
   workName: z.string().min(2, "Work name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().transform(val => {
-    const compact = val.trim().replace(/[\s-]/g, '');
-    if (compact.startsWith('+91')) return compact.slice(3);
-    if (compact.length === 12 && compact.startsWith('91')) return compact.slice(2);
-    return compact;
-  }).pipe(
-    z.string().length(10, "Must be exactly 10 digits").regex(/^[6-9]\d{9}$/, "Must start with 6-9")
-  ),
+  country: z.string().min(1, "Select a country"),
+  phone: z.string().min(1, "Phone number is required"),
   company: z.string().min(1, "Company is required"),
   jobFunction: z
     .string()
@@ -52,7 +63,10 @@ const formSchema = z.object({
       (value) => JOB_FUNCTIONS.includes(value as (typeof JOB_FUNCTIONS)[number]),
       "Please select your job function.",
     ),
-});
+}).refine(
+  (data) => isValidPhoneNumber(data.phone, data.country as CountryCode),
+  { message: "Enter a valid phone number for the selected country.", path: ["phone"] },
+);
 
 /**
  * The three games, and the only destinations this screen will forward to.
@@ -132,6 +146,7 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
     defaultValues: {
       workName: '',
       email: '',
+      country: 'IN',
       phone: '',
       company: '',
       jobFunction: '',
@@ -148,8 +163,13 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
       return;
     }
 
+    // Sent in E.164 form (e.g. "+919876543210") so the server can identify
+    // the country from the number itself, no matter which one was picked here.
+    const phoneNumber = parsePhoneNumberFromString(values.phone, values.country as CountryCode);
+    const { country, ...rest } = values;
     const payload: PlayerInput = {
-      ...values,
+      ...rest,
+      phone: phoneNumber!.number,
       jobFunction: values.jobFunction as PlayerInput['jobFunction'],
       noWorkEmail
     };
@@ -232,21 +252,50 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem className="space-y-1.5">
-                  <FormLabel className="font-mono text-eyebrow-micro font-medium uppercase tracking-[0.03em] text-white">
-                    Phone Number
-                  </FormLabel>
-                  <FormControl>
-                    <BureauInput type="tel" inputMode="numeric" placeholder="9XXXXXXXXX" {...field} />
-                  </FormControl>
-                  <FormMessage className="font-mono text-body-sm text-coral-600" />
-                </FormItem>
-              )}
-            />
+            <div className="flex gap-2">
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem className="w-[128px] shrink-0 space-y-1.5">
+                    <FormLabel className="font-mono text-eyebrow-micro font-medium uppercase tracking-[0.03em] text-white">
+                      Country
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <BureauSelect {...field} className="pr-8">
+                          {COUNTRY_OPTIONS.map((c) => (
+                            <option key={c.code} value={c.code} className="bg-ink-900 text-white">
+                              {c.code} +{c.dialCode}
+                            </option>
+                          ))}
+                        </BureauSelect>
+                        <ChevronDown
+                          aria-hidden
+                          className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-[var(--text-on-dark-faint)]"
+                          strokeWidth={1.5}
+                        />
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="flex-1 space-y-1.5">
+                    <FormLabel className="font-mono text-eyebrow-micro font-medium uppercase tracking-[0.03em] text-white">
+                      Phone Number
+                    </FormLabel>
+                    <FormControl>
+                      <BureauInput type="tel" inputMode="tel" placeholder="9XXXXXXXXX" {...field} />
+                    </FormControl>
+                    <FormMessage className="font-mono text-body-sm text-coral-600" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
