@@ -3,6 +3,7 @@
  * play count — but never at the cost of turning a real visitor away, which is
  * why the free-mail rule has an explicit override rather than a hard block.
  */
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 /** Rejected unless the visitor takes the "I don't have one" override. */
 const FREE_MAIL_DOMAINS = new Set([
@@ -49,21 +50,16 @@ export function isFreeMail(email: string): boolean {
   return FREE_MAIL_DOMAINS.has(emailDomain(normalizeEmail(email)));
 }
 
-/** Strips formatting and an explicit Indian country/trunk prefix. */
-export function normalizePhone(raw: string): string {
-  const compact = raw.replace(/[\s\-()./]/g, "");
-  const digits = compact.replace(/\D/g, "");
-
-  if (compact.startsWith("+91")) return digits.slice(2);
-  if (digits.length === 14 && digits.startsWith("0091")) return digits.slice(4);
-  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
-  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
-
-  return digits;
-}
-
-export function isValidIndianMobile(normalized: string): boolean {
-  return /^[6-9]\d{9}$/.test(normalized);
+/**
+ * Parses an international phone number and returns it in E.164 form
+ * (e.g. "+919876543210"), or null if it isn't a valid number for the
+ * country implied by its prefix. Numbers with no country code default to
+ * India, so existing bare 10-digit entries keep working unprefixed.
+ */
+export function normalizePhone(raw: string): string | null {
+  const phoneNumber = parsePhoneNumberFromString(raw.trim(), "IN");
+  if (!phoneNumber || !phoneNumber.isValid()) return null;
+  return phoneNumber.number;
 }
 
 export function firstNameOf(workName: string): string {
@@ -117,12 +113,12 @@ export function validateEntry(
   }
 
   const phone = normalizePhone(input.phone);
-  if (!isValidIndianMobile(phone)) {
+  if (!phone) {
     return {
       ok: false,
       error: {
         field: "phone",
-        message: "Enter a 10-digit mobile number starting with 6, 7, 8 or 9.",
+        message: "Enter a valid phone number, with a country code if outside India.",
       },
     };
   }

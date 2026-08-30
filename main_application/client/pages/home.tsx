@@ -10,7 +10,6 @@ import { PrimaryNav } from '@/components/bureau/primary-nav';
 import { ArenaHeader } from '@/components/bureau/arena-header';
 import { QrPanel } from '@/components/qr-panel';
 import { cn } from '@/lib/utils';
-import Landing from '@/pages/landing';
 import { useSyncState } from '@/hooks/useSyncState';
 
 /*
@@ -93,16 +92,17 @@ export default function Home() {
   const { session, clearSession } = usePlayerSession();
   const [mounted, setMounted] = useState(false);
 
-  useSyncState(session ? { type: 'hub', session } : { type: 'landing' });
+  useSyncState({ type: 'hub', session: session ?? null });
 
-  // Mark mounted to avoid hydration mismatch, then enforce session
+  // Mark mounted to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Don't render the hub if we're not logged in
+  // This is the arena's front door for both the tablet and the LED: the game
+  // list is shown whether or not anyone has registered yet. Tapping a game
+  // without a session routes through registration via ProtectedRoute.
   if (!mounted) return null;
-  if (!session) return <Landing />;
 
   return (
     <Layout showHeader={false}>
