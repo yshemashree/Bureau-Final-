@@ -11,8 +11,11 @@
  * if the player does not answer correctly before it expires, `onExit` fires
  * and they are returned to the home screen.
  *
- * Correct answer → Retry button unlocks, timer stops.
- * Wrong answer   → Red feedback; player has one attempt (timer continues).
+ * Correct answer → Retry button unlocks, timer stops, selection locks in.
+ * Wrong answer   → Red feedback on that pick; the player can try a different
+ *                   option again as long as time remains (timer continues).
+ *                   The correct option is never revealed ahead of a correct
+ *                   guess - that would make the retry gate meaningless.
  * Timeout        → `onExit` is called.
  */
 
@@ -99,7 +102,7 @@ export function LifelineGate({
   }, [shuffled, correctShuffledIdx, timeLeft, selectedIdx, retryUnlocked, onStateChange]);
 
   const handleSelect = (idx: number) => {
-    if (selectedIdx !== null) return; // one attempt per question
+    if (retryUnlocked) return; // already correct - locked in
     setSelectedIdx(idx);
     if (idx === correctShuffledIdx) setRetryUnlocked(true);
   };
@@ -207,33 +210,32 @@ export function LifelineGate({
           )}>
             {shuffled.map((opt, idx) => {
               const isThisCorrect = idx === correctShuffledIdx;
-              const isSelected    = selectedIdx === idx;
-              const showResult    = selectedIdx !== null;
+              const isWrongPick   = selectedIdx === idx && !isThisCorrect;
 
               return (
                 <button
                   key={idx}
-                  disabled={selectedIdx !== null}
+                  disabled={retryUnlocked}
                   onClick={() => handleSelect(idx)}
                   className={cn(
                     "tap flex w-full items-center border text-left transition-colors duration-[var(--dur-base)]",
                     compact ? "gap-3 px-4 py-3.5" : "gap-3 px-4 py-3",
-                    !showResult && "border-ink-700 bg-ink-900 hover:border-amber-500/60",
-                    showResult && isThisCorrect && "border-lime-400/60 bg-lime-400/8",
-                    showResult && isSelected && !isThisCorrect && "border-coral-600/60 bg-coral-600/8",
-                    showResult && !isSelected && !isThisCorrect && "border-ink-800 bg-ink-900 opacity-30",
+                    retryUnlocked && isThisCorrect && "border-lime-400/60 bg-lime-400/8",
+                    retryUnlocked && !isThisCorrect && "border-ink-800 bg-ink-900 opacity-30",
+                    !retryUnlocked && isWrongPick && "border-coral-600/60 bg-coral-600/8",
+                    !retryUnlocked && !isWrongPick && "border-ink-700 bg-ink-900 hover:border-amber-500/60",
                   )}
                 >
                   <span className={cn(
                     "shrink-0 font-mono font-medium tabular-nums",
                     "text-eyebrow-micro",
-                    showResult && isThisCorrect ? "text-lime-400" : "text-amber-500",
+                    retryUnlocked && isThisCorrect ? "text-lime-400" : "text-amber-500",
                   )}>
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                   <span className={cn(
                     "min-w-0 flex-1 font-sans leading-snug text-body-md",
-                    showResult && isThisCorrect ? "text-lime-300" : "text-white",
+                    retryUnlocked && isThisCorrect ? "text-lime-300" : "text-white",
                   )}>
                     {opt.text}
                   </span>

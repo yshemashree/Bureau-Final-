@@ -54,13 +54,11 @@ export function Layout({
   };
 
   return (
-    <div className={cn("flex w-full overflow-hidden bg-[#00010f]", isLed ? "h-full" : "h-[100dvh] sm:items-center sm:justify-center")}>
+    <div className={cn("flex w-full overflow-hidden bg-[#00010f]", isLed ? "h-full" : "h-[100dvh]")}>
       <div
         className={cn(
-          "app-shell relative flex w-full flex-col bg-russian",
-          isLed
-            ? "!h-full !max-h-full"
-            : "h-[100dvh] sm:h-[min(100dvh,1000px)] sm:max-w-[680px] sm:border-x sm:border-ink-800 lg:h-[min(100dvh,1040px)] lg:max-w-[760px]",
+          "app-shell relative flex h-[100dvh] w-full flex-col bg-russian",
+          isLed && "!h-full !max-h-full",
         )}
       >
         {/* The matrix sits behind every dark field, fading out under content. */}

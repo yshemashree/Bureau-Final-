@@ -75,29 +75,28 @@ export function LifelineSpectator({ state }: { state: any }) {
             <div className="flex flex-col stagger-in gap-2 px-4 pb-4">
               {shuffled.map((opt: any, idx: number) => {
                 const isThisCorrect = idx === correctShuffledIdx;
-                const isSelected    = selectedIdx === idx;
-                const showResult    = selectedIdx !== null;
-                
+                const isWrongPick   = selectedIdx === idx && !isThisCorrect;
+
                 return (
                   <div
                     key={idx}
                     className={cn(
                       "flex w-full items-center border text-left transition-colors duration-[var(--dur-base)] gap-3 px-4 py-3",
-                      !showResult && "border-ink-700 bg-ink-900",
-                      showResult && isThisCorrect && "border-lime-400/60 bg-lime-400/8",
-                      showResult && isSelected && !isThisCorrect && "border-coral-600/60 bg-coral-600/8",
-                      showResult && !isSelected && !isThisCorrect && "border-ink-800 bg-ink-900 opacity-30",
+                      retryUnlocked && isThisCorrect && "border-lime-400/60 bg-lime-400/8",
+                      retryUnlocked && !isThisCorrect && "border-ink-800 bg-ink-900 opacity-30",
+                      !retryUnlocked && isWrongPick && "border-coral-600/60 bg-coral-600/8",
+                      !retryUnlocked && !isWrongPick && "border-ink-700 bg-ink-900",
                     )}
                   >
                     <span className={cn(
                       "shrink-0 font-mono font-medium tabular-nums text-eyebrow-micro",
-                      showResult && isThisCorrect ? "text-lime-400" : "text-amber-500",
+                      retryUnlocked && isThisCorrect ? "text-lime-400" : "text-amber-500",
                     )}>
                       {String(idx + 1).padStart(2, '0')}
                     </span>
                     <span className={cn(
                       "min-w-0 flex-1 font-sans leading-snug text-body-md",
-                      showResult && isThisCorrect ? "text-lime-300" : "text-white",
+                      retryUnlocked && isThisCorrect ? "text-lime-300" : "text-white",
                     )}>
                       {opt.text}
                     </span>

@@ -739,7 +739,11 @@ export default function SpotTheFraud() {
 
   // gameState === 'playing'
   const isImageQuestion = currentQuestion?.kind === 'image';
-  const imageQuestionInstruction = currentQuestion?.selectN === 1 ? 'Only One Correct' : 'Two Correct';
+  // Read off the live question, not the level's own (occasionally stale)
+  // metadata label - some "select 2" levels' actual question banks need 3.
+  const imageQuestionInstruction = currentQuestion?.selectN === 1
+    ? 'Only One Correct'
+    : `Select ${currentQuestion?.selectN}`;
 
   return (
     <>
@@ -755,7 +759,7 @@ export default function SpotTheFraud() {
           <div className="flex items-center justify-between">
              <EyebrowTag>
                {currentLevel.kind === 'image'
-                 ? `Find the AI generated image · ${currentLevel.correctCount === 1 ? 'Only One Correct' : 'Two Correct'}`
+                 ? `Find the AI generated image · ${imageQuestionInstruction}`
                  : currentLevel.label}
              </EyebrowTag>
             <span className="font-mono text-eyebrow-micro tabular-nums text-white uppercase tracking-[0.03em]">
@@ -821,13 +825,16 @@ export default function SpotTheFraud() {
               </p>
             )}
 
-            {/* Image questions use a four-card visual grid. Text questions keep
-                the larger, naturally-sized answer rows. */}
+            {/* Image questions use a two-column visual grid, sized to
+                whatever the question bank actually holds - not every image
+                level has exactly 4 (level 7 has 6, level 9 has 8), so rows
+                grow as needed and the grid scrolls rather than clipping the
+                extra tiles. Text questions keep the naturally-sized rows. */}
             <div className={cn(
-              "mt-3 min-h-0 flex-1 pr-0.5 stagger-in",
+              "mt-3 min-h-0 flex-1 pr-0.5 stagger-in overflow-y-auto app-scroll",
               currentQuestion.kind === 'image'
-                ? "grid min-h-0 grid-cols-2 grid-rows-2 gap-2 overflow-hidden"
-                : "flex flex-col gap-2 overflow-y-auto"
+                ? "grid grid-cols-2 gap-2"
+                : "flex flex-col gap-2"
             )}>
               {shuffledOptions.map((opt, i) => {
                 const isSelected = selectedIndices.includes(opt.originalIndex);
@@ -843,7 +850,7 @@ export default function SpotTheFraud() {
                     className={cn(
                       "tap group relative shrink-0 overflow-hidden border text-left transition-colors duration-[var(--dur-base)]",
                       currentQuestion.kind === 'image'
-                        ? "h-full min-h-0 w-full"
+                        ? "aspect-square w-full"
                         : "flex w-full items-center gap-3 px-4 py-3.5",
                       isDevCorrect
                         ? "border-lime-300 bg-[rgba(190,242,100,0.10)] hover:border-lime-300"
