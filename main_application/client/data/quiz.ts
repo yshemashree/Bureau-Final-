@@ -17,9 +17,9 @@ export const LEVELS: Level[] = [
   { level: 5, label: "LEVEL UP - select 2", kind: 'text', optionCount: 4, correctCount: 2, timerSec: 35, points: 8, nearMiss: 4, skip: true, theme: "Network at scale" },
   { level: 6, label: "MCQ - select 2", kind: 'text', optionCount: 4, correctCount: 2, timerSec: 35, points: 10, nearMiss: 5, skip: true, theme: "Cross-application signals" },
   { level: 7, label: "Spot the Fake - select 2", kind: 'image', optionCount: 4, correctCount: 2, timerSec: 35, points: 12, nearMiss: 6, skip: true, theme: "Synthetic media" },
-  { level: 8, label: "LEVEL UP - select 2", kind: 'text', optionCount: 4, correctCount: 2, timerSec: 40, points: 14, nearMiss: 7, skip: true, theme: "Fraud patterns" },
-  { level: 9, label: "Spot the Fake - select 2", kind: 'image', optionCount: 4, correctCount: 2, timerSec: 40, points: 16, nearMiss: 8, skip: true, theme: "Synthetic media" },
-  { level: 10, label: "MCQ - select 2", kind: 'text', optionCount: 4, correctCount: 2, timerSec: 40, points: 18, nearMiss: 9, skip: true, theme: "Expert ring attribution" },
+  { level: 8, label: "LEVEL UP - select 3", kind: 'text', optionCount: 4, correctCount: 3, timerSec: 40, points: 14, nearMiss: 7, skip: true, theme: "Fraud patterns" },
+  { level: 9, label: "Spot the Fake - select 3", kind: 'image', optionCount: 8, correctCount: 3, timerSec: 40, points: 16, nearMiss: 8, skip: true, theme: "Synthetic media" },
+  { level: 10, label: "MCQ - select 3", kind: 'text', optionCount: 4, correctCount: 3, timerSec: 40, points: 18, nearMiss: 9, skip: true, theme: "Expert ring attribution" },
 ];
 
 export interface Question {

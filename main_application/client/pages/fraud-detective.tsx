@@ -508,13 +508,17 @@ export default function FraudDetective() {
     });
   };
 
-  const endRun = (isEarlyExit: boolean = false) => {
+  // Only called by natural run completion (last case cleared or exhausted)
+  // - never by an explicit exit, which always goes through leaveAndSubmit
+  // instead so it never shows the "High Score Achieved" screen for a run the
+  // player deliberately cut short.
+  const endRun = () => {
     const completedPerfectly =
       caseResults.length === activeCases.length &&
       caseResults.every((result) => result.points > 0 && !result.revealed);
 
     submitCurrentRun(() => {
-      setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
+      setGameState(completedPerfectly ? 'highscore' : 'lifeline');
     });
   };
 
@@ -968,7 +972,7 @@ export default function FraudDetective() {
                   variant="outline"
                   size="sm"
                   className="shrink-0 border-coral-500/30 text-coral-400 hover:bg-coral-500/10 hover:text-coral-300"
-                  onClick={() => endRun(true)}
+                  onClick={() => leaveAndSubmit('/')}
                 >
                   End Run
                 </Button>
@@ -991,7 +995,7 @@ export default function FraudDetective() {
         onOpenChange={setShowEndGameDialog}
         onConfirm={() => {
           setShowEndGameDialog(false);
-          endRun(true);
+          leaveAndSubmit('/');
         }}
       />
       </>
@@ -1210,7 +1214,7 @@ export default function FraudDetective() {
         onOpenChange={setShowEndGameDialog}
         onConfirm={() => {
           setShowEndGameDialog(false);
-          endRun(true);
+          leaveAndSubmit('/');
         }}
       />
       </>
@@ -1336,7 +1340,7 @@ export default function FraudDetective() {
         onOpenChange={setShowEndGameDialog}
         onConfirm={() => {
           setShowEndGameDialog(false);
-          endRun(true);
+          leaveAndSubmit('/');
         }}
       />
       </>

@@ -15,11 +15,12 @@ import { useSyncState } from '@/hooks/useSyncState';
 
 type Tab = 'combined' | GameKey;
 
-/* Short labels: four segments have to share 390px of phone. */
+/* Spoof the System has no meaningful score of its own (it only redirects to
+ * the client's live link), so the board sticks to the two games that are
+ * actually scored: All games, Spot the Fraud, Fraud Detective. */
 const TABS: { key: Tab; label: string }[] = [
   { key: 'combined', label: 'All' },
   { key: 'spot_the_fraud', label: 'Spot' },
-  { key: 'spoof_the_system', label: 'Spoof' },
   { key: 'fraud_detective', label: 'Detect' },
 ];
 

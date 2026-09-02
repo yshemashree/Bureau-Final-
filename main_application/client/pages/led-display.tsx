@@ -47,6 +47,13 @@ export default function LedDisplay() {
     }
   }, [syncState, session, saveSession, clearSession]);
 
+  // Everything that isn't one of these explicit branches falls through to the
+  // <Home /> default below (hub, registering, idle, or an unrecognised type) -
+  // PrimaryNav needs to read all of those as "/" too, or the Arena tab reads
+  // as inactive (grey) the whole time a tablet session is mid-registration.
+  const isHubFallback = !['active', 'highscore', 'leaderboard_page', 'gate', 'rules', 'rules_custom'].includes(syncState.type);
+  const overrideLocation = syncState.type === 'leaderboard_page' ? '/leaderboard' : isHubFallback ? '/' : undefined;
+
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black">
       <div
@@ -59,7 +66,7 @@ export default function LedDisplay() {
         }}
         className="relative shrink-0 overflow-hidden bg-[#00010f]"
       >
-        <DisplayContext.Provider value={{ isLed: true, overrideLocation: syncState.type === 'hub' ? '/' : syncState.type === 'leaderboard_page' ? '/leaderboard' : undefined }}>
+        <DisplayContext.Provider value={{ isLed: true, overrideLocation }}>
           {syncState.type === 'active' ? (
             syncState.gameState === 'lifeline' ? (
               <LifelineSpectator state={syncState} />
