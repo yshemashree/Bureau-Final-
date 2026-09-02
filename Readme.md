@@ -2,7 +2,8 @@
 
 This application houses both the interactive games (Experience 1) and the AI Demo Area (Experience 2) for the Bureau booth at GFF 2026.
 
-## Architecture
+## Architecture Structure
+
 
 Single Node.js application, one deployable unit, running entirely on a host machine at the booth. The tablet and the LED wall are both just browsers pointed at that host over the local network — there is no separate LED build.
 
