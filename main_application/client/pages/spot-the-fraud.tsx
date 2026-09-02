@@ -460,10 +460,14 @@ export default function SpotTheFraud() {
     });
   };
 
-  const endRun = (isEarlyExit: boolean = false) => {
+  // Only called by natural run completion (last level cleared or exhausted)
+  // - never by an explicit exit, which always goes through leaveAndSubmit
+  // instead so it never shows the "High Score Achieved" screen for a run the
+  // player deliberately cut short.
+  const endRun = () => {
     const completedPerfectly = cleared.length === LEVELS.length;
     submitCurrentRun(() => {
-      setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
+      setGameState(completedPerfectly ? 'highscore' : 'lifeline');
     });
   };
 
@@ -495,7 +499,7 @@ export default function SpotTheFraud() {
     game: 'spot_the_fraud',
     rulesProps: gameState === 'rules' ? {
       gameName: "Spot the Fraud",
-      premise: "Ten levels of fraud rings, mule chains, and synthetic media. Four options each - harder levels need two answers.",
+      premise: "Ten levels of fraud rings, mule chains, and synthetic media. Four options each - harder levels need two or three answers.",
       scoring: "Up to 100 points - Banked points stay yours, even if you fail later.",
       endsWhen: "A wrong answer ends your run once all 3 skips are used.",
       lifelines: "After game over answer the Lifeline question to retry.",
@@ -529,7 +533,7 @@ export default function SpotTheFraud() {
       <Layout title="Spot the Fraud" back="/">
         <RulesScreen 
           gameName="Spot the Fraud"
-          premise="Ten levels of fraud rings, mule chains, and synthetic media. Four options each - harder levels need two answers."
+          premise="Ten levels of fraud rings, mule chains, and synthetic media. Four options each - harder levels need two or three answers."
           scoring="Up to 100 points - Banked points stay yours, even if you fail later."
           endsWhen="A wrong answer ends your run once all 3 skips are used."
           lifelines="After game over answer the Lifeline question to retry."
@@ -682,7 +686,7 @@ export default function SpotTheFraud() {
         onOpenChange={setShowEndGameDialog}
         onConfirm={() => {
           setShowEndGameDialog(false);
-          endRun(true);
+          leaveAndSubmit('/');
         }}
       />
       </>
@@ -768,6 +772,13 @@ export default function SpotTheFraud() {
   const imageQuestionInstruction = currentQuestion?.selectN === 1
     ? 'Only One Correct'
     : `Select ${currentQuestion?.selectN}`;
+  // The text-level header label ("MCQ - select 2") comes from the same stale
+  // per-level metadata, not the live question - swap in the real count so
+  // the header never promises fewer picks than Submit actually requires.
+  const textLevelLabel =
+    currentQuestion && currentQuestion.selectN > 1 && currentLevel?.label
+      ? currentLevel.label.replace(/select \d+/i, `select ${currentQuestion.selectN}`)
+      : currentLevel?.label;
 
   return (
     <>
@@ -784,7 +795,7 @@ export default function SpotTheFraud() {
              <EyebrowTag>
                {currentLevel.kind === 'image'
                  ? `Find the AI generated image · ${imageQuestionInstruction}`
-                 : currentLevel.label}
+                 : textLevelLabel}
              </EyebrowTag>
             <span className="font-mono text-eyebrow-micro tabular-nums text-white uppercase tracking-[0.03em]">
               Score <span className="text-violet-500">{score}</span>
@@ -968,7 +979,7 @@ export default function SpotTheFraud() {
         onOpenChange={setShowEndGameDialog}
         onConfirm={() => {
           setShowEndGameDialog(false);
-          endRun(true);
+          leaveAndSubmit('/');
         }}
       />
     </>

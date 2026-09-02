@@ -150,7 +150,14 @@ export function SpotTheFraudSpectator({ state }: { state: any }) {
   }
 
   const isImageQuestion = currentQuestion.kind === "image";
-  const imageQuestionInstruction = currentQuestion.selectN === 1 ? 'Only One Correct' : 'Two Correct';
+  // Read off the live question, not the level's own (occasionally stale)
+  // metadata label - some "select 2" levels' actual question banks need 3,
+  // exactly as on the player's own screen.
+  const imageQuestionInstruction = currentQuestion.selectN === 1 ? 'Only One Correct' : `Select ${currentQuestion.selectN}`;
+  const textLevelLabel =
+    currentQuestion.selectN > 1 && currentLevel?.label
+      ? currentLevel.label.replace(/select \d+/i, `select ${currentQuestion.selectN}`)
+      : currentLevel?.label;
 
   return (
     <div className="flex h-full w-full flex-col p-6 bg-black">
@@ -158,8 +165,8 @@ export function SpotTheFraudSpectator({ state }: { state: any }) {
         <div className="flex items-center justify-between">
           <EyebrowTag>
             {currentLevel?.kind === 'image'
-              ? `Find the AI generated image · ${currentLevel?.correctCount === 1 ? 'Only One Correct' : 'Two Correct'}`
-              : currentLevel?.label}
+              ? `Find the AI generated image · ${imageQuestionInstruction}`
+              : textLevelLabel}
           </EyebrowTag>
           <span className="font-mono text-eyebrow-micro tabular-nums text-white uppercase tracking-[0.03em]">
             Score <span className="text-violet-500">{score}</span>
@@ -193,8 +200,11 @@ export function SpotTheFraudSpectator({ state }: { state: any }) {
         )}
 
         <div className={cn(
-          "flex-1 min-h-0 grid gap-4",
-          isImageQuestion ? "grid-cols-2 grid-rows-2" : "grid-rows-4"
+          "min-h-0 flex-1 gap-4 overflow-y-auto app-scroll",
+          // Not every image level has exactly 4 options (level 7 has 6,
+          // level 9 has 8), so this wraps and scrolls instead of a fixed
+          // 2x2 grid that clips or overlaps the extra tiles.
+          isImageQuestion ? "grid grid-cols-2" : "flex flex-col"
         )}>
           {shuffledOptions?.map((opt: any, i: number) => {
             const isSelected = selectedIndices?.includes(opt.originalIndex);
@@ -204,8 +214,8 @@ export function SpotTheFraudSpectator({ state }: { state: any }) {
               <div
                 key={i}
                 className={cn(
-                  "relative overflow-hidden border transition-colors duration-[var(--dur-base)] flex",
-                  isImageQuestion ? "w-full h-full" : "items-center gap-4 px-6 py-4",
+                  "relative shrink-0 overflow-hidden border transition-colors duration-[var(--dur-base)] flex",
+                  isImageQuestion ? "aspect-square w-full" : "items-center gap-4 px-6 py-4",
                   isSelected
                     ? "border-violet-700 bg-[rgba(71,21,255,0.08)]"
                     : "border-ink-800 bg-ink-900"

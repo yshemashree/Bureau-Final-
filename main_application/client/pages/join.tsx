@@ -187,7 +187,11 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
         }
       },
       onError: (err: any) => {
-        const errorMsg = err?.response?.data?.error || err?.message || "Please check your network and try again.";
+        // ApiError.message is always prefixed "HTTP 4xx ..." for logging - a
+        // visitor at the booth should only ever see the reason, never the
+        // status code, so read the parsed error body directly and otherwise
+        // fall back to a plain, code-free message.
+        const errorMsg = err?.data?.error || "Please check your network and try again.";
         toast({
           title: "Registration Failed",
           description: errorMsg,
@@ -227,7 +231,7 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
                     Work Name
                   </FormLabel>
                   <FormControl>
-                    <BureauInput placeholder="e.g. Priya Sharma" {...field} />
+                    <BureauInput placeholder="Your Name" {...field} />
                   </FormControl>
                   <FormMessage className="font-mono text-body-sm text-coral-600" />
                 </FormItem>
@@ -245,7 +249,7 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
                     </FormLabel>
                   </div>
                   <FormControl>
-                    <BureauInput type="email" placeholder="priya@company.com" {...field} />
+                    <BureauInput type="email" placeholder="Your work email" {...field} />
                   </FormControl>
                   <FormMessage className="font-mono text-body-sm text-coral-600" />
                 </FormItem>
@@ -289,7 +293,7 @@ function RegistrationForm({ gameLabel }: { gameLabel?: string }) {
                       Phone Number
                     </FormLabel>
                     <FormControl>
-                      <BureauInput type="tel" inputMode="tel" placeholder="9XXXXXXXXX" {...field} />
+                      <BureauInput type="tel" inputMode="tel" placeholder="Your phone number" {...field} />
                     </FormControl>
                     <FormMessage className="font-mono text-body-sm text-coral-600" />
                   </FormItem>
