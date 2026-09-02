@@ -1,4 +1,3 @@
-import { useLocation } from 'wouter';
 import { Fingerprint, LogOut, ScanEye, Target, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -35,6 +34,14 @@ const OTHER_GAMES: OtherGame[] = [
 interface RetryOptionsProps {
   currentGame: GameKey;
   onRetry: () => void;
+  /**
+   * Called for every way of leaving this screen other than Retry (the two
+   * cross-game routes and End Run), with the destination href. The run has
+   * already failed by the time this screen shows, so every one of these
+   * exits must submit the score before navigating - none of them may go
+   * through router navigation directly, or the run is silently dropped.
+   */
+  onNavigate: (href: string) => void;
 }
 
 /**
@@ -42,8 +49,7 @@ interface RetryOptionsProps {
  * Retry, the two cross-game routes, and End Run line up identically anywhere
  * a game explains a failed attempt.
  */
-export function RetryOptions({ currentGame, onRetry }: RetryOptionsProps) {
-  const [, setLocation] = useLocation();
+export function RetryOptions({ currentGame, onRetry, onNavigate }: RetryOptionsProps) {
   const otherGames = OTHER_GAMES.filter((game) => game.key !== currentGame);
 
   return (
@@ -66,7 +72,7 @@ export function RetryOptions({ currentGame, onRetry }: RetryOptionsProps) {
             key={game.key}
             variant="outline"
             size="lg"
-            onClick={() => setLocation(game.href)}
+            onClick={() => onNavigate(game.href)}
             className="min-h-[64px] w-full justify-start gap-3"
           >
             <Icon className="size-4 shrink-0 text-violet-400" />
@@ -78,7 +84,7 @@ export function RetryOptions({ currentGame, onRetry }: RetryOptionsProps) {
       <Button
         variant="outline"
         size="lg"
-        onClick={() => setLocation('/')}
+        onClick={() => onNavigate('/')}
         className="min-h-[64px] w-full justify-start gap-3"
       >
         <LogOut className="size-4 shrink-0 text-violet-400" />

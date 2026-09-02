@@ -411,45 +411,69 @@ export default function SpotTheFraud() {
   const [lifelineState, setLifelineState] = useState<any>(null);
   const reentryChecked = useRef(false);
 
+  const buildRunPayload = (): RunInput => {
+    let tier = "Participation";
+    if (cleared.includes(10)) tier = "Master";
+    else if (cleared.includes(5)) tier = "Achiever";
+
+    return {
+      playerId: session!.player.id,
+      game: 'spot_the_fraud',
+      points: score,
+      source: new URLSearchParams(window.location.search).get('src') === 'qr' ? 'phone' : 'kiosk',
+      idempotencyKey: runIdRef.current,
+      detail: {
+        levelReached: levelIndex + 1,
+        cleared,
+        nearMiss: nearMissLevel,
+        skipped,
+        recoverySkipsUsed: SPOT_RECOVERY_SKIP_COUNT - recoverySkipsRemaining,
+        tier,
+        perLevel: perLevelData
+      }
+    };
+  };
+
+  // Every way of leaving a failed/finished run - Submit & End, running out of
+  // recovery skips, clearing every level, or backing out to another game from
+  // the game-over screen - has to submit the score first. Centralising the
+  // submit here means none of those exits can be added later without it.
+  const submitCurrentRun = (onSaved: (res: any) => void) => {
+    if (!session) {
+      const fallback = { pointsRecorded: score, isPersonalBest: false, standing: { rank: 0, behind: 0 } };
+      setFinalResult(fallback);
+      onSaved(fallback);
+      return;
+    }
+
+    const payload = buildRunPayload();
+    lastPayloadRef.current = payload;
+
+    submitRun.mutate({ data: payload }, {
+      onSuccess: (res) => {
+        setFinalResult(res);
+        onSaved(res);
+      },
+      onError: () => {
+        setGameState('error');
+      }
+    });
+  };
+
   const endRun = (isEarlyExit: boolean = false) => {
     const completedPerfectly = cleared.length === LEVELS.length;
-    if (session) {
-      let tier = "Participation";
-      if (cleared.includes(10)) tier = "Master";
-      else if (cleared.includes(5)) tier = "Achiever";
-
-      const payload: RunInput = {
-        playerId: session.player.id,
-        game: 'spot_the_fraud',
-        points: score,
-        source: new URLSearchParams(window.location.search).get('src') === 'qr' ? 'phone' : 'kiosk',
-        idempotencyKey: runIdRef.current,
-        detail: {
-          levelReached: levelIndex + 1,
-          cleared,
-          nearMiss: nearMissLevel,
-          skipped,
-          recoverySkipsUsed: SPOT_RECOVERY_SKIP_COUNT - recoverySkipsRemaining,
-          tier,
-          perLevel: perLevelData
-        }
-      };
-      
-      lastPayloadRef.current = payload;
-
-      submitRun.mutate({ data: payload }, {
-        onSuccess: (res) => {
-          setFinalResult(res);
-          setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
-        },
-        onError: () => {
-          setGameState('error');
-        }
-      });
-    } else {
-      setFinalResult({ pointsRecorded: score, isPersonalBest: false, standing: { rank: 0, behind: 0 } });
+    submitCurrentRun(() => {
       setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
-    }
+    });
+  };
+
+  // Used by the game-over screen's End Run and cross-game links: those must
+  // save the run exactly like Retry does, then navigate instead of switching
+  // to the highscore/lifeline state.
+  const leaveAndSubmit = (href: string) => {
+    submitCurrentRun(() => {
+      setLocation(href);
+    });
   };
 
   const handleRetrySubmit = () => {
@@ -621,7 +645,7 @@ export default function SpotTheFraud() {
                     </Button>
                   </>
                 ) : (
-                  <RetryOptions currentGame="spot_the_fraud" onRetry={endRun} />
+                  <RetryOptions currentGame="spot_the_fraud" onRetry={endRun} onNavigate={leaveAndSubmit} />
                 )}
               </>
             ) : (

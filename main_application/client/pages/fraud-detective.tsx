@@ -451,51 +451,80 @@ export default function FraudDetective() {
   const [lifelineState, setLifelineState] = useState<any>(null);
   const reentryChecked = useRef(false);
 
-  const endRun = (isEarlyExit: boolean = false) => {
+  const computeMilestoneBonus = () => {
     const correctCaseCount = caseResults.filter(
       (result) => result.points > 0 && !result.revealed
     ).length;
-    const milestoneBonus =
+    return (
       (correctCaseCount >= 3 ? DETECTIVE_THREE_CASE_BONUS : 0) +
-      (correctCaseCount === 5 ? DETECTIVE_ALL_CASES_BONUS : 0);
+      (correctCaseCount === 5 ? DETECTIVE_ALL_CASES_BONUS : 0)
+    );
+  };
+
+  const buildRunPayload = (): RunInput => {
+    const milestoneBonus = computeMilestoneBonus();
+    const total = caseScore + bonusScore + milestoneBonus;
+
+    return {
+      playerId: session!.player.id,
+      game: 'fraud_detective',
+      points: total,
+      source: new URLSearchParams(window.location.search).get('src') === 'qr' ? 'phone' : 'kiosk',
+      idempotencyKey: runIdRef.current,
+      detail: {
+        cases: caseResults,
+        casePoints: caseScore,
+        milestonePoints: milestoneBonus,
+        bonusRoundPoints: bonusScore,
+        recoverySkipsUsed: DETECTIVE_RECOVERY_SKIP_COUNT - recoverySkipsRemaining,
+        tier: total >= 80 ? "Master" : (total >= 40 ? "Achiever" : "Participation"),
+      }
+    };
+  };
+
+  // Every way of leaving a failed/finished run - Submit & End, running out of
+  // recovery skips, clearing every case, or backing out to another game from
+  // the game-over screen - has to submit the score first. Centralising the
+  // submit here means none of those exits can be added later without it.
+  const submitCurrentRun = (onSaved: (res: any) => void) => {
+    if (!session) {
+      const fallback = { pointsRecorded: caseScore + bonusScore + computeMilestoneBonus(), isPersonalBest: false, standing: { rank: 0, behind: 0 } };
+      setFinalResult(fallback);
+      onSaved(fallback);
+      return;
+    }
+
+    const payload = buildRunPayload();
+    lastPayloadRef.current = payload;
+
+    submitRun.mutate({ data: payload }, {
+      onSuccess: (res) => {
+        setFinalResult(res);
+        onSaved(res);
+      },
+      onError: () => {
+        setGameState('error');
+      }
+    });
+  };
+
+  const endRun = (isEarlyExit: boolean = false) => {
     const completedPerfectly =
       caseResults.length === activeCases.length &&
       caseResults.every((result) => result.points > 0 && !result.revealed);
 
-    if (session) {
-      const total = caseScore + bonusScore + milestoneBonus;
-
-      const payload: RunInput = {
-        playerId: session.player.id,
-        game: 'fraud_detective',
-        points: total,
-        source: new URLSearchParams(window.location.search).get('src') === 'qr' ? 'phone' : 'kiosk',
-        idempotencyKey: runIdRef.current,
-        detail: {
-          cases: caseResults,
-          casePoints: caseScore,
-          milestonePoints: milestoneBonus,
-          bonusRoundPoints: bonusScore,
-          recoverySkipsUsed: DETECTIVE_RECOVERY_SKIP_COUNT - recoverySkipsRemaining,
-          tier: total >= 80 ? "Master" : (total >= 40 ? "Achiever" : "Participation"),
-        }
-      };
-      
-      lastPayloadRef.current = payload;
-
-      submitRun.mutate({ data: payload }, {
-        onSuccess: (res) => {
-          setFinalResult(res);
-          setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
-        },
-        onError: () => {
-          setGameState('error');
-        }
-      });
-    } else {
-      setFinalResult({ pointsRecorded: caseScore + bonusScore + milestoneBonus, isPersonalBest: false, standing: { rank: 0, behind: 0 } });
+    submitCurrentRun(() => {
       setGameState(completedPerfectly || isEarlyExit ? 'highscore' : 'lifeline');
-    }
+    });
+  };
+
+  // Used by the game-over screen's End Run and cross-game links: those must
+  // save the run exactly like Retry does, then navigate instead of switching
+  // to the highscore/lifeline state.
+  const leaveAndSubmit = (href: string) => {
+    submitCurrentRun(() => {
+      setLocation(href);
+    });
   };
 
   const handleRetrySubmit = () => {
@@ -1170,7 +1199,7 @@ export default function FraudDetective() {
                 </Button>
               </>
             ) : (
-              <RetryOptions currentGame="fraud_detective" onRetry={endRun} />
+              <RetryOptions currentGame="fraud_detective" onRetry={endRun} onNavigate={leaveAndSubmit} />
             )}
           </div>
         </ScreenBody>
